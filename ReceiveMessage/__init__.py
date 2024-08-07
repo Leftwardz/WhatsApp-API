@@ -7,6 +7,7 @@ from ..Utils.Api import MediciaAPI, WhatsAppAPI, TimeUtils, AzureTableUtils
 def main(req: func.HttpRequest) -> func.HttpResponse:
     nathan_number = '5511958921707'
     pedro_number = '5521993648826'
+    clinica_number = '556295532226'
 
     logging.info(f'Método HTTP: {req.method}')
 
@@ -53,8 +54,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                                 name = entity['Name']
                             
                             component = whats.text_body_component(3, name, number, text)
-                            whats.send_template_message(nathan_number, "message_notification", component)
-                            whats.send_template_message(pedro_number, "message_notification", component)
+                            whats.send_template_message(nathan_number, "message_notification_v2", component)
+                            whats.send_template_message(clinica_number, "message_notification_v2", component)
 
                             entity = azure_table.query_entity('RecentMessages', number)
                             if entity:

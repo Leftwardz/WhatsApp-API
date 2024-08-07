@@ -19,6 +19,7 @@ def main(mytimer: func.TimerRequest) -> None:
 
     nathan_number = '5511958921707'
     pedro_number = '5521993648826'
+    clinica_number = '556295532226'
 
     whats = WhatsAppAPI()
     med_api = MediciaAPI()
