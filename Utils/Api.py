@@ -56,6 +56,10 @@ class TimeUtils:
 
         return (time1 - time2).total_seconds() * 1000
 
+    @staticmethod
+    def last_year_dmy():
+        last_year = datetime.now() - timedelta(days=364)
+        return last_year.strftime('%Y-%m-%d')
 
 class MediciaAPI:
     def __init__(self):
