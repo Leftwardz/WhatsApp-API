@@ -80,43 +80,83 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                             message_wa_id = message['context']['id']
                             button_text = message['button']['text']
 
-                            original_entity = azure_table.query_entity('ConfirmationMessages', message_wa_id)
-                            agenda_id = original_entity['agenda_id']
+                            confirmation_message_entity = azure_table.query_entity('ConfirmationMessages', message_wa_id)
+                            last_year_consult_message_entity = azure_table.query_entity('LastYearConsultMessages', message_wa_id)
 
-                            if not original_entity['status']:
-                                if button_text == 'CONFIRMAR':
-                                    sucess_message = 'Seu agendamento foi confirmado com sucesso!\n'\
-                                    'Se surgir alguma dúvida, não hesite em entrar em contato.'
-                                    
-                                    if MediciaAPI.confirm_agenda(agenda_id):
+                            if confirmation_message_entity:
+                                agenda_id = confirmation_message_entity['agenda_id']
+                                if not confirmation_message_entity['status']:
+                                    if button_text == 'CONFIRMAR':
+                                        sucess_message = 'Seu agendamento foi confirmado com sucesso!\n'\
+                                        'Se surgir alguma dúvida, não hesite em entrar em contato.'
+                                        
+                                        if MediciaAPI.confirm_agenda(agenda_id):
+                                            entity = {
+                                                'PartitionKey': 'ConfirmationMessages',
+                                                'RowKey': message_wa_id,
+                                                'time': time.today(),
+                                                'agenda_id': agenda_id,
+                                                'status': 'Confirmado'
+                                            }
+
+                                            azure_table.update_entity(entity)
+
+                                            whats.send_custom_message(number, sucess_message)
+                                    elif button_text == 'CANCELAR':
+                                        cancel_message = 'Entendemos que imprevistos acontecem. \n'\
+                                        'Se desejar reagendar sua consulta, estamos disponíveis para ajudar a encontrar uma nova data que funcione para você.'
+
+                                        if MediciaAPI.cancel_agenda(agenda_id):
+                                            entity = {
+                                                'PartitionKey': 'ConfirmationMessages',
+                                                'RowKey': message_wa_id,
+                                                'time': time.today(),
+                                                'agenda_id': agenda_id,
+                                                'status': 'Cancelado'
+                                            }
+
+                                            azure_table.update_entity(entity)
+
+                                            whats.send_custom_message(number, cancel_message)
+
+                            if last_year_consult_message_entity:
+                                if not last_year_consult_message_entity['status']:
+                                    if button_text == 'SIM':
+                                        return_message = 'Notificamos nossos atendentes,\n'\
+                                        'entraremos em contato em breve para agendar uma consulta.\n Ficamos à disposição para qualquer dúvida.'
+                                        
+                                        whats.send_custom_message(number, return_message)
+
                                         entity = {
-                                            'PartitionKey': 'ConfirmationMessages',
-                                            'RowKey': message_wa_id,
-                                            'time': time.today(),
-                                            'agenda_id': agenda_id,
-                                            'status': 'Confirmado'
-                                        }
+                                                'PartitionKey': 'LastYearConsultMessages',
+                                                'RowKey': message_wa_id,
+                                                'time': time.today(),
+                                                'pacient_name': last_year_consult_message_entity['nome'],
+                                                'status': 'Cliente aceita agendar consulta anual'
+                                            }
 
                                         azure_table.update_entity(entity)
 
-                                        whats.send_custom_message(number, sucess_message)
-                                elif button_text == 'CANCELAR':
-                                    cancel_message = 'Entendemos que imprevistos acontecem. \n'\
-                                    'Se desejar reagendar sua consulta, estamos disponíveis para ajudar a encontrar uma nova data que funcione para você.'
+                                        component = whats.text_body_component(2, entity['pacient_name'], number)
+                                        whats.send_template_message(nathan_number, "msg_notification_consulta_anual", component)
+                                        whats.send_template_message(clinica_number, "msg_notification_consulta_anual", component)
 
-                                    if MediciaAPI.cancel_agenda(agenda_id):
+                                    elif button_text == 'NÃO':
+                                        return_message = 'Ficamos a disposição caso queira marcar uma consulta futuramente.'
+                                        
+                                        whats.send_custom_message(number, return_message)
+
                                         entity = {
-                                            'PartitionKey': 'ConfirmationMessages',
-                                            'RowKey': message_wa_id,
-                                            'time': time.today(),
-                                            'agenda_id': agenda_id,
-                                            'status': 'Confirmado'
-                                        }
+                                                'PartitionKey': 'LastYearConsultMessages',
+                                                'RowKey': message_wa_id,
+                                                'time': time.today(),
+                                                'pacient_name': last_year_consult_message_entity['nome'],
+                                                'status': 'Cliente não aceitou agendar consulta anual'
+                                            }
 
-                                        azure_table.update_entity(entity)
-
-                                        whats.send_custom_message(number, cancel_message)
+                                        azure_table.update_entity(entity)    
                                 
+
                         had_message = True
 
                     message = None

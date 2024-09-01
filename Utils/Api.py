@@ -281,7 +281,19 @@ class MediciaAPI:
             logging.info(f'Erro na solicitação do Token: Código de status {response.status_code}')
             logging.info(response.text)
 
+    
+    def get_last_year_pacients(self):
+        agenda_last_year = self.agenda_atendidos(TimeUtils.last_year_dmy())
+
+        pacients_to_message = []
+        for agenda in agenda_last_year:
+            agendas_from_pacient_id = self.search_agenda_2(agenda['pacienteId'], TimeUtils.last_year_dmy(),
+                                                              TimeUtils.today_dmy())
+
+            if len(agendas_from_pacient_id) <= 1:
+                pacients_to_message.append(agendas_from_pacient_id[0]['pacienteId'])
         
+        return pacients_to_message
 
 class WhatsAppAPI:
     def __init__(self):
