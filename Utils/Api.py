@@ -285,13 +285,57 @@ class MediciaAPI:
             logging.info(f'Erro na solicitação do Token: Código de status {response.status_code}')
             logging.info(response.text)
 
-    
+
+    def search_agenda(self, patient_id, data_ini, data_fim=''):
+        if not data_fim:
+            data_fim = data_ini
+
+        self.__get_token__()
+
+        # Converter strings de data para objetos datetime
+        data_ini = datetime.strptime(data_ini, '%Y-%m-%d')
+        data_fim = datetime.strptime(data_fim, '%Y-%m-%d')
+
+        delta = timedelta(days=31)
+        current_start = data_ini - timedelta(days=1)
+        results = []
+
+        while current_start <= data_fim:
+            current_end = min(current_start + delta, data_fim)
+
+            # Construir a URL para o intervalo atual
+            url = f"https://api.medicinadireta.com.br/odata/Agenda?" \
+                  f"$filter=pacienteId eq {patient_id} "\
+                  "&$select=agendaConfigId, pacienteId, agendaStatus, horaInicio, dataInicio"
+
+            header = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.__token__}',
+                'dataInicio': current_start.strftime('%Y-%m-%d'),
+                'datafim': current_end.strftime('%Y-%m-%d')
+            }
+
+            response = requests.get(url, headers=header)
+
+            if response.status_code == 200:
+                results.extend(response.json()['value'])
+            else:
+                logging.info(f'Erro na solicitação: Código de status {response.status_code}')
+                break
+
+            current_start = current_end + timedelta(days=1)
+
+            if len(results) > 1:
+                break
+
+        return results
+
     def get_last_year_pacients(self):
         agenda_last_year = self.agenda_atendidos(TimeUtils.last_year_dmy())
 
         pacients_to_message = []
         for agenda in agenda_last_year:
-            agendas_from_pacient_id = self.search_agenda_2(agenda['pacienteId'], TimeUtils.last_year_dmy(),
+            agendas_from_pacient_id = self.search_agenda(agenda['pacienteId'], TimeUtils.last_year_dmy(),
                                                               TimeUtils.today_dmy())
 
             if len(agendas_from_pacient_id) <= 1:
