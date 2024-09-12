@@ -80,7 +80,7 @@ class MediciaAPI:
         return [datetime.now().strftime('%m'), datetime.now().strftime('%d')]
 
     def __get_token__(self):
-        url = 'https://api.medicinadireta.com.br/odata/Token/'
+        url = 'https://api.etternum.com.br/odata/Token/'
         header = {
             'Content-Type': 'application/json'
         }
@@ -100,7 +100,7 @@ class MediciaAPI:
     def get_patient_cellphone(self, patient_id):
         self.__get_token__()
 
-        url = f"https://api.medicinadireta.com.br/odata/pacienteTelefone/PacienteId(PacienteID={patient_id})"
+        url = f"https://api.etternum.com.br/odata/pacienteTelefone/PacienteId(PacienteID={patient_id})"
 
         header = {
             'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ class MediciaAPI:
         """
         self.__get_token__()
 
-        url = "https://api.medicinadireta.com.br/odata/paciente?" \
+        url = "https://api.etternum.com.br/odata/paciente?" \
               f"$select=id, nome, dataNascimento, idade" \
               f"&$filter=ativado eq 'S' and month(dataNascimento) eq {self.get_date()[0]} and " \
               f"day(dataNascimento) eq {self.get_date()[1]}"
@@ -142,7 +142,7 @@ class MediciaAPI:
     def search_pacient_by_id(self, pacient_id):
         self.__get_token__()
 
-        url = f"https://api.medicinadireta.com.br/odata/paciente({pacient_id})?" \
+        url = f"https://api.etternum.com.br/odata/paciente({pacient_id})?" \
               f"$select=id, nome, dataNascimento, idade"
 
         header = {
@@ -163,7 +163,7 @@ class MediciaAPI:
     def search_professional_by_id(self, professional_id):
         self.__get_token__()
 
-        url = f"https://api.medicinadireta.com.br/odata/Usuario({professional_id})?"
+        url = f"https://api.etternum.com.br/odata/Usuario({professional_id})?"
               # f"$select=id, nome, dataNascimento, idade"
 
         header = {
@@ -183,7 +183,7 @@ class MediciaAPI:
     def agenda_atendidos(self, data):
         self.__get_token__()
 
-        url = "https://api.medicinadireta.com.br/odata/Agenda?" \
+        url = "https://api.etternum.com.br/odata/Agenda?" \
               "$filter=agendaStatus/descricao eq 'ATENDIDO'" \
               "&$select=pacienteId, agendaStatus, horaInicio, dataInicio" \
 
@@ -207,7 +207,7 @@ class MediciaAPI:
     def agenda_agendados(self, data):
         self.__get_token__()
 
-        url = "https://api.medicinadireta.com.br/odata/Agenda?" \
+        url = "https://api.etternum.com.br/odata/Agenda?" \
               "$filter=agendaStatus/descricao eq 'AGENDADO'" \
               "&$select=id, pacienteId, profissionalId, horaInicio, dataInicio"
         
@@ -236,7 +236,7 @@ class MediciaAPI:
         """
         self.__get_token__()
 
-        url = 'https://api.medicinadireta.com.br/odata/Agenda/Confirmar'
+        url = 'https://api.etternum.com.br/odata/Agenda/Confirmar'
         header = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.__token__}'
@@ -263,7 +263,7 @@ class MediciaAPI:
         """
         self.__get_token__()
 
-        url = f'https://api.medicinadireta.com.br/odata/Agenda/{id_agenda}/Desmarcar'
+        url = f'https://api.etternum.com.br/odata/Agenda/{id_agenda}/Desmarcar'
         header = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.__token__}'
@@ -304,7 +304,7 @@ class MediciaAPI:
             current_end = min(current_start + delta, data_fim)
 
             # Construir a URL para o intervalo atual
-            url = f"https://api.medicinadireta.com.br/odata/Agenda?" \
+            url = f"https://api.etternum.com.br/odata/Agenda?" \
                   f"$filter=pacienteId eq {patient_id} "\
                   "&$select=agendaConfigId, pacienteId, agendaStatus, horaInicio, dataInicio"
 
