@@ -163,7 +163,7 @@ class MediciaAPI:
     def search_professional_by_id(self, professional_id):
         self.__get_token__()
 
-        url = f"https://api.etternum.com.br/Integracao/Usuario({professional_id})?"
+        url = f"https://api.etternum.com.br/Integracao/Usuario({professional_id})?" \
               f"$select=id, nome"
 
         header = {
