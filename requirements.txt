@@ -7,3 +7,4 @@ azure-data-tables
 
 requests
 python-decouple
+aiohttp
