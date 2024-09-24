@@ -1,5 +1,6 @@
 import datetime
 import logging
+import asyncio
 import azure.functions as func
 from ..Utils.Api import MediciaAPI, WhatsAppAPI, TimeUtils, AzureTableUtils
 
@@ -13,7 +14,7 @@ def main(mytimer: func.TimerRequest) -> None:
     azure_table = AzureTableUtils()
     time = TimeUtils()
 
-    pacients_id = med_api.get_last_year_pacients()
+    pacients_id = asyncio.run(med_api.get_last_year_pacients())
 
     for paciente_id in pacients_id:
         pacient_info = med_api.search_pacient_by_id()

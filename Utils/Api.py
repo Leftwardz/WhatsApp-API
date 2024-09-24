@@ -6,7 +6,8 @@ import logging
 from azure.core.credentials import AzureNamedKeyCredential
 from azure.core.exceptions import ResourceNotFoundError
 from azure.data.tables import TableServiceClient
-
+import aiohttp
+import asyncio
 
 class AzureTableUtils:
     def get_service(self):
@@ -330,18 +331,67 @@ class MediciaAPI:
 
         return results
 
-    def get_last_year_pacients(self):
+    async def get_last_year_pacients(self):
         agenda_last_year = self.agenda_atendidos(TimeUtils.last_year_dmy())
 
         pacients_to_message = []
         for agenda in agenda_last_year:
-            agendas_from_pacient_id = self.search_agenda(agenda['pacienteId'], TimeUtils.last_year_dmy(),
-                                                              TimeUtils.today_dmy())
+            agendas_from_pacient_id = await self.search_agenda(agenda['pacienteId'], TimeUtils.last_year_dmy(),
+                                                               TimeUtils.today_dmy())
 
             if len(agendas_from_pacient_id) <= 1:
                 pacients_to_message.append(agendas_from_pacient_id[0]['pacienteId'])
         
         return pacients_to_message
+
+    async def fetch_data(self, session, url, header):
+        async with session.get(url, headers=header) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                logging.info(f'Erro na solicitação: Código de status {response.status}')
+                return None
+
+    async def get_agenda_async(self, patient_id, data_ini, data_fim):
+        # Converter strings de data para objetos datetime
+        data_ini = datetime.strptime(data_ini, '%Y-%m-%d')
+        data_fim = datetime.strptime(data_fim, '%Y-%m-%d')
+
+        delta = timedelta(days=31)
+        current_start = data_ini - timedelta(days=1)
+        tasks = []
+
+        async with aiohttp.ClientSession() as session:
+            while current_start <= data_fim:
+                current_end = min(current_start + delta, data_fim)
+
+                # Construir a URL para o intervalo atual
+                url = f"https://api.etternum.com.br/Integracao/Agenda?" \
+                      f"$filter=pacienteId eq {patient_id} " \
+                      "&$select=agendaConfigId, pacienteId, agendaStatus, horaInicio, dataInicio"
+
+                header = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {self.__token__}',
+                    'dataInicio': current_start.strftime('%Y-%m-%d'),
+                    'datafim': current_end.strftime('%Y-%m-%d')
+                }
+
+                # Adicionar a task da requisição à lista
+                tasks.append(self.fetch_data(session, url, header))
+
+                current_start = current_end + timedelta(days=1)
+
+            # Executar todas as requisições simultaneamente
+            responses = await asyncio.gather(*tasks)
+
+        # Filtrar resultados válidos e combinar as respostas
+        results = []
+        for response in responses:
+            if response and 'value' in response:
+                results.extend(response['value'])
+
+        return results
 
 class WhatsAppAPI:
     def __init__(self):
