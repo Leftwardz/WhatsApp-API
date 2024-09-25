@@ -336,7 +336,7 @@ class MediciaAPI:
 
         pacients_to_message = []
         for agenda in agenda_last_year:
-            agendas_from_pacient_id = await self.search_agenda(agenda['pacienteId'], TimeUtils.last_year_dmy(),
+            agendas_from_pacient_id = await self.get_agenda_async(agenda['pacienteId'], TimeUtils.last_year_dmy(),
                                                                TimeUtils.today_dmy())
 
             if len(agendas_from_pacient_id) <= 1:
