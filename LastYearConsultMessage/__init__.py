@@ -15,14 +15,18 @@ def main(mytimer: func.TimerRequest) -> None:
     time = TimeUtils()
 
     pacients_id = asyncio.run(med_api.get_last_year_pacients())
+    try:
+        whats.send_custom_message(nathan_number, 'Rodando LastYearMessage')
+    except:
+        pass
 
     for paciente_id in pacients_id:
-        pacient_info = med_api.search_pacient_by_id()
+        pacient_info = med_api.search_pacient_by_id(paciente_id)
         phone = med_api.get_patient_cellphone(paciente_id)
         if phone:
             pacient_info['celular'] = phone[0]['ddi'] + phone[0]['ddd'] + phone[0]['numero']
 
-            component = whats.text_body_component(2, pacient_info['nome'], pacient_info['celular'])
+            component = whats.text_body_component(1, pacient_info['nome'])
             response = whats.send_template_message(pacient_info['celular'], "agendar_consulta_anual", component)
 
             if response.status_code == 200:
